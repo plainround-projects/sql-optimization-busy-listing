@@ -1,0 +1,41 @@
+name: ci
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: lab
+          POSTGRES_PASSWORD: lab
+          POSTGRES_DB: lab
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U lab -d lab"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 30
+    env:
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGUSER: lab
+      PGPASSWORD: lab
+      PGDATABASE: lab
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # pg_stat_statements must be preloaded, which a service container cannot do from its options:
+      # set it with ALTER SYSTEM, then restart the container the service started.
+      - name: Preload pg_stat_statements
+        run: |
+          psql -X -c "ALTER SYSTEM SET shared_preload_libraries = 'pg_stat_statements'"
+          psql -X -c "ALTER SYSTEM SET pg_stat_statements.track_utility = off"
+          docker restart ${{ job.services.postgres.id }}
+          until pg_isready -h localhost -p 5432 -U lab -d lab; do sleep 1; done
+      - run: make db PSQL="psql -X -q -v ON_ERROR_STOP=1"
+      - run: make test
