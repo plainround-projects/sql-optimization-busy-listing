@@ -43,6 +43,8 @@ where = ["src"]
 line-length = 120
 target-version = "py312"
 src = ["src", "tests"]
+# The tech/ notes quote code fragments on purpose; ruff 0.17 would otherwise try to reformat the ones in Markdown.
+extend-exclude = ["tech"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM", "N", "C4", "RUF", "PT", "D100", "D101", "D103", "D104"]
@@ -66,7 +68,7 @@ disallow_untyped_calls = false
 testpaths = ["tests"]
 addopts = "-ra --strict-markers"
 # Starlette's test client warns that it prefers a newer HTTP library; the warning is about the test tooling only.
-filterwarnings = ["ignore:Using `httpx` with `starlette.testclient`:DeprecationWarning"]
+filterwarnings = ["ignore:Using `httpx` with `starlette.testclient`:Warning"]
 markers = [
     "integration: needs PostgreSQL from docker-compose.yml with the seeded tables (make up db)",
     "e2e: replays the lesson through the command-line program and the HTTP service against PostgreSQL",
