@@ -1,0 +1,101 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sql-optimization-busy-listing"
+version = "0.1.0"
+description = "An ORM-backed orders listing found slow by pg_stat_statements: the N+1 removed, deep offsets replaced by keyset paging."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "Sumit Srivastava" }]
+dependencies = [
+    "psycopg[binary]>=3.2,<4",
+    "sqlalchemy>=2.0,<3",
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    "requests>=2.32",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8,<10",
+    "pytest-cov>=5",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "import-linter>=2.0",
+    "pip-audit>=2.7",
+    "httpx>=0.27",
+    "types-requests>=2.32",
+]
+
+[project.scripts]
+busy-listing-run = "busy_listing.interfaces.run_cli:main"
+busy-listing-serve = "busy_listing.interfaces.serve_cli:main"
+busy-listing-load = "busy_listing.interfaces.load_cli:main"
+busy-listing-health = "busy_listing.interfaces.health_cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "N", "C4", "RUF", "PT", "D100", "D101", "D103", "D104"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["src", "tests"]
+
+# Test functions are named for the behavior they check; annotating every one adds noise, not safety.
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_calls = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+# Starlette's test client warns that it prefers a newer HTTP library; the warning is about the test tooling only.
+filterwarnings = ["ignore:Using `httpx` with `starlette.testclient`:DeprecationWarning"]
+markers = [
+    "integration: needs PostgreSQL from docker-compose.yml with the seeded tables (make up db)",
+    "e2e: replays the lesson through the command-line program and the HTTP service against PostgreSQL",
+]
+
+[tool.coverage.run]
+source = ["busy_listing"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+
+[tool.importlinter]
+root_package = "busy_listing"
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Layers: interfaces -> infrastructure -> application -> domain, never upward"
+type = "layers"
+layers = [
+    "busy_listing.interfaces",
+    "busy_listing.infrastructure",
+    "busy_listing.application",
+    "busy_listing.domain",
+]
+
+[[tool.importlinter.contracts]]
+name = "Domain and application know nothing about PostgreSQL, the ORM or HTTP"
+type = "forbidden"
+source_modules = ["busy_listing.domain", "busy_listing.application"]
+forbidden_modules = ["psycopg", "sqlalchemy", "fastapi", "requests", "uvicorn"]

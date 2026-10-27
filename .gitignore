@@ -1,6 +1,15 @@
 .venv/
 __pycache__/
-.pytest_cache/
-.env
 *.pyc
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.import_linter_cache/
+.coverage
+.env
+.DS_Store
+logs/
 .omc/
