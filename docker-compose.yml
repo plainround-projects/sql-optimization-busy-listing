@@ -3,6 +3,7 @@
 services:
   db:
     image: postgres:18
+    init: true                    # PID 1 reaps stray exec processes (health checks) instead of the postmaster
     environment:
       POSTGRES_USER: ${PGUSER:-lab}
       POSTGRES_PASSWORD: ${PGPASSWORD:-lab}
