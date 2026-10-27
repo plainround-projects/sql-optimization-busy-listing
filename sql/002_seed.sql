@@ -1,14 +1,23 @@
 -- 002_seed.sql: DML. 100,000 customers and 1,000,000 orders, then fresh statistics.
+-- Safe to run twice: a table that already has rows is left alone (use `make reset` to start from nothing).
 SELECT setseed(0.42);
 SET timezone = 'UTC';
 
+SELECT NOT EXISTS (SELECT 1 FROM customers) AS customers_empty, NOT EXISTS (SELECT 1 FROM orders) AS orders_empty \gset
+
+\if :customers_empty
+BEGIN;
 INSERT INTO customers (id, name, email, country_code)
 SELECT n, 'Customer ' || n, 'customer' || n || '@example.test',
        (ARRAY['US','GB','DE','JP','IN','BR','FR','CA'])[1 + n % 8]
 FROM generate_series(1, 100000) AS n;
+COMMIT;
+\endif
 
 -- created_at is shuffled against id, as after an import or a backfill, so the rows of one page are
 -- spread over many heap pages. shuffled / 3 is integer division: three orders share each created_at.
+\if :orders_empty
+BEGIN;
 INSERT INTO orders (customer_id, status, total, created_at, note)
 SELECT 1 + floor(random() * 100000)::int,
        (ARRAY['pending','paid','shipped','failed'])[1 + floor(random() * 4)::int],
@@ -17,6 +26,8 @@ SELECT 1 + floor(random() * 100000)::int,
        'order note ' || numbered.n
 FROM (SELECT n, row_number() OVER (ORDER BY random()) AS shuffled FROM generate_series(1, 1000000) AS n) AS numbered
 ORDER BY numbered.n;
+COMMIT;
+\endif
 
 VACUUM (ANALYZE) customers;
 VACUUM (ANALYZE) orders;
