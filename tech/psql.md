@@ -70,7 +70,7 @@ reset: ## drop the lab's tables (make db rebuilds them)
 	$(PSQL) < sql/reset.sql
 ```
 
-`$(PSQL) < sql/001_schema.sql` etc. feed the files. `make db` therefore stops at the first error.
+`$(PSQL) < sql/001_schema.sql`, `$(PSQL) < sql/002_seed.sql` and `$(PSQL) < sql/003_queries.sql` feed the three files in that order. `make db` therefore stops at the first error.
 
 ### The meta-commands in the SQL
 

@@ -269,7 +269,7 @@ Three of the lab's helper modules are the same in all three repositories: the re
 
 #### `tests/unit/infrastructure/test_retry.py`
 
-The code under test is `retry`, a function that calls an operation, and if the operation fails with one of a list of error types, waits a moment and tries again. The wait doubles after each failure (1 second, 2 seconds, 4 seconds, and so on) and is then multiplied by a random number between 0.5 and 1.0. That random part is called **jitter**: it stops many clients that failed at the same moment from all retrying at the same moment.
+The code under test is `retry`, a function that calls an operation, and if the operation fails with one of a list of error types, waits a moment and tries again. The wait doubles after each failure (1 second, 2 seconds, 4 seconds, 8 seconds, each double the one before) and is then multiplied by a random number between 0.5 and 1.0. That random part is called **jitter**: it stops many clients that failed at the same moment from all retrying at the same moment.
 
 `tests/unit/infrastructure/test_retry.py`, lines 1 to 5:
 
@@ -1135,7 +1135,7 @@ def test_rankings_are_shown_for_the_first_and_last_phase_and_two_rows_for_the_ot
     assert "## Top two, phase phase 2" in text
 ```
 
-The statement rankings are long, so the first and last phase get a top ten (`## Top ten, phase ...`) and the phases in between get only a top two. The labels in the test are `phase 1` and so on, which is why the heading reads `phase phase 1`.
+The statement rankings are long, so the first and last phase get a top ten (`## Top ten, phase ...`) and the phases in between get only a top two. The labels in the test are `phase 1`, `phase 2`, `phase 3` and `phase 4`, which is why the heading reads `phase phase 1`.
 
 `tests/unit/application/test_report.py`, lines 33 to 34:
 
