@@ -895,6 +895,136 @@ def measure_host_load() -> HostLoad:
 
 `load_settings()` is the start-up described in the command-line note. `build_app(settings)` is the composition root (FastAPI note). `measure_host_load()` calls `os.getloadavg()[0]` (the 1-minute load average) and `os.cpu_count() or 1`.
 
+### The headers and imports not quoted elsewhere
+
+#### Reading the top of a module
+
+Most modules start with the same three parts, explained once here so that the sections below can be short. First a **docstring**: a text in triple quotes as the very first statement of a file; Python keeps it as the description of the module, and tools show it as help. Then `from __future__ import annotations`, a line that tells Python to treat type hints (the `: int` and `-> str` annotations) as plain text that is not evaluated while the file loads; this lets a hint refer to a class that is defined further down. Then the imports: `import x` makes the module `x` available; `from x import y` brings one name out of it; a dot in front, as in `from .postgres import session`, means "the module `postgres` in this same package" and two dots, `from ..domain.errors import ...`, mean "go up one package, then into `domain`". The logger line `logger = logging.getLogger(__name__)` creates a logger named after the module (`__name__` is the module's dotted name), so every log line says which module wrote it.
+
+##### The `__init__.py` files
+
+A folder is a Python **package** when it contains a file called `__init__.py`. The file may be empty or hold only a docstring, as these do. Each of the four layers has one, and its docstring states the layer's rule.
+
+`src/busy_listing/domain/__init__.py`, lines 1 to 1:
+
+```python
+"""The listing and the statistics vocabulary: cursors, pages, strategies, ranked statements. Depends on nothing."""
+```
+
+`src/busy_listing/application/__init__.py`, lines 1 to 1:
+
+```python
+"""Use cases and the ports they need; no knowledge of PostgreSQL, SQLAlchemy or HTTP."""
+```
+
+`src/busy_listing/infrastructure/__init__.py`, lines 1 to 1:
+
+```python
+"""Adapters: PostgreSQL through SQLAlchemy, pg_stat_statements, HTTP, files, settings, logging, retries."""
+```
+
+`src/busy_listing/interfaces/__init__.py`, lines 1 to 1:
+
+```python
+"""Entry points: the HTTP application and the command-line programs."""
+```
+
+
+##### `ports.py`, the rest of the interfaces
+
+A **port** is an interface that the inner layers define and the outer layers implement. Here each is a `typing.Protocol`: a class that lists methods, and any object that has those methods counts as an implementation without having to inherit from it. The bodies are `...` (a literal that means "nothing here"); the docstrings say what each method promises.
+
+`src/busy_listing/application/ports.py`, lines 61 to 67:
+
+```python
+    def prepare(self, strategy: Strategy) -> Bookmarks:
+        """Look up what the strategy needs before the timed run (keyset bookmarks); outside the statistics."""
+        ...
+
+    def run(self, strategy: Strategy, requests: int, bookmarks: Bookmarks) -> LoadTimings:
+        """Send `requests` listing requests with the lesson's fixed page sequence."""
+        ...
+```
+
+`LoadDriver` is the load script. `prepare(strategy)` looks up what the strategy needs before the timed run (the bookmarks for keyset paging) so that this work is not counted in the statistics. `run(strategy, requests, bookmarks)` sends the given number of listing requests in the lesson's fixed page sequence and returns the timings.
+
+`src/busy_listing/application/ports.py`, lines 70 to 79:
+
+```python
+class ArtifactStore(Protocol):
+    """Where the replay leaves its evidence: the captured plans and the results notes."""
+
+    def save_plan(self, name: str, lines: Sequence[str]) -> None:
+        """Keep the plan next to its query."""
+        ...
+
+    def save_report(self, text: str) -> None:
+        """Keep the results notes."""
+        ...
+```
+
+`ArtifactStore` is where the replay leaves its evidence: `save_plan` keeps a captured plan under its name and `save_report` keeps the results notes.
+
+`src/busy_listing/application/ports.py`, lines 82 to 89:
+
+```python
+class HealthProbe(Protocol):
+    """A dependency's health check."""
+
+    name: str
+
+    def check(self) -> str:
+        """Return a short description of what is healthy. Raise `ProbeFailedError` when it is not."""
+        ...
+```
+
+`HealthProbe` is a dependency's health check: it has a `name` and a `check()` that returns a short description of what is healthy or raises `ProbeFailedError`.
+
+##### `http_load.py`, the top of the file
+
+`src/busy_listing/infrastructure/http_load.py`, lines 1 to 7:
+
+```python
+"""Adapter: the lesson's load script over HTTP. Implements `LoadDriver`.
+
+It clicks through pages the way real users (and bots) do, deep pages included. The same seed gives the same
+sequence of pages, so runs before and after a fix are comparable. For keyset paging a page number has no meaning,
+so each page is reached from a bookmark: the cursor of the row just before it, looked up once before the timed run
+(as a deep link or a saved position would provide).
+"""
+```
+
+The docstring explains the whole adapter. The load script clicks through pages like real users and bots do, deep pages included. A fixed random seed gives the same page sequence on every run, so runs before and after a fix can be compared. For keyset paging a page number means nothing, so each page is reached from a bookmark, the cursor of the row just before it, looked up once before the timed run, as a deep link or a saved position would provide.
+
+`src/busy_listing/infrastructure/http_load.py`, lines 17 to 19:
+
+```python
+from ..domain.cursor import Cursor
+from ..domain.lesson import PAGES
+from ..domain.listing import PAGE_SIZE, Strategy
+```
+
+Three imports from the domain layer: the `Cursor` type, `PAGES` (the list of page numbers the load visits) and, from the listing module, the page size and the `Strategy` enum.
+
+##### `health_probes.py`, the top of the file
+
+`src/busy_listing/infrastructure/health_probes.py`, lines 1 to 1:
+
+```python
+"""Adapter: the health check of the one dependency, PostgreSQL."""
+```
+
+The docstring: the health check of the one dependency, PostgreSQL.
+
+`src/busy_listing/infrastructure/health_probes.py`, lines 7 to 8:
+
+```python
+from ..application.health import ProbeFailedError
+from .postgres import scalar, session
+```
+
+`ProbeFailedError` is the lab's own error for "this dependency is not usable". `scalar` runs a query and returns its single value; `session` opens a connection for a block of code.
+
 ## Try it yourself
 
 1. `.venv/bin/python -c "from busy_listing.domain.listing import Strategy; print(list(Strategy), Strategy.parse('keyset') is Strategy.KEYSET, Strategy.NAIVE == 'naive')"` prints `[<Strategy.NAIVE: 'naive'>, <Strategy.BATCHED: 'batched'>, <Strategy.KEYSET: 'keyset'>] True True`.

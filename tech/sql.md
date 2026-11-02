@@ -238,6 +238,83 @@ COMMIT;
 
 `reset.sql` drops both tables in one transaction (`CASCADE` also drops what depends on them). Migration `001` ("expand") creates the covering index next to the old one inside a transaction, then runs a plain `VACUUM orders` outside it. Migration `002` ("contract") drops the old narrow index. The PostgreSQL-indexes note explains why. The down scripts undo them: `down/002...` recreates the old index and `down/001...` drops the covering one; run them in that order so one ordering index always exists.
 
+### The remaining SQL files, line by line
+
+Every file below is a plain SQL script. A line that starts with two hyphens (`--`) is a **comment**: text for the reader, ignored by PostgreSQL. A statement ends at a semicolon. `BEGIN;` starts a transaction (a group of statements that either all take effect or none does) and `COMMIT;` ends it and makes it permanent. `EXPLAIN` asks PostgreSQL to show how it would run a query instead of returning the rows; with `ANALYZE` it runs the query and adds measured times, and `BUFFERS` adds the number of 8 kilobyte pages touched. `SET timezone = 'UTC';` makes the session read and print timestamps in UTC so that every machine gives the same text.
+
+#### The "down" migrations
+
+The lesson changes the ordering index in two moves, called expand and contract: migration 001 adds the new covering index (expand) and migration 002 drops the old one (contract). The down scripts must be run in the opposite order, so that one ordering index always exists.
+
+`sql/migrations/down/001_expand_covering_listing_index.down.sql`, lines 1 to 5:
+
+```sql
+-- Undo the expand step: drop the covering index. Run it after the down script of 002, so one ordering index
+-- always exists. Safe to run twice.
+BEGIN;
+DROP INDEX IF EXISTS idx_orders_listing;
+COMMIT;
+```
+
+Undoes the expand step by dropping the covering index `idx_orders_listing`. `DROP INDEX IF EXISTS` does nothing if the index is already gone, so the script is safe to run twice. The comment says to run it after the down script of 002.
+
+`sql/migrations/down/002_contract_drop_old_listing_index.down.sql`, lines 1 to 4:
+
+```sql
+-- Undo the contract step: bring the old ordering index back (run this before undoing 001). Safe to run twice.
+BEGIN;
+CREATE INDEX IF NOT EXISTS idx_orders_created_id ON orders (created_at DESC, id DESC);
+COMMIT;
+```
+
+Undoes the contract step by bringing back the old ordering index. `CREATE INDEX IF NOT EXISTS idx_orders_created_id ON orders (created_at DESC, id DESC);` builds an index on the creation time, newest first, with the id as a tie-breaker; `IF NOT EXISTS` skips the work if it is already there.
+
+#### The explain scripts
+
+`sql/explain/e1_offset_page1.sql`, lines 1 to 4:
+
+```sql
+-- Step 3, page 1 by offset: OFFSET 0 reads 20 index entries.
+SET timezone = 'UTC';
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT * FROM orders ORDER BY created_at DESC, id DESC LIMIT 20 OFFSET 0;
+```
+
+Page 1 by offset. `LIMIT 20 OFFSET 0` returns the first 20 rows of the ordering and skips none, so only 20 index entries are read.
+
+`sql/explain/e1_offset_page100.sql`, lines 1 to 4:
+
+```sql
+-- Step 3, page 100 by offset: OFFSET 1980 produces 2,000 rows and keeps the last 20.
+SET timezone = 'UTC';
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT * FROM orders ORDER BY created_at DESC, id DESC LIMIT 20 OFFSET 1980;
+```
+
+Page 100 by offset. `OFFSET 1980` means "skip 1,980 rows, then return 20": PostgreSQL must produce 2,000 rows and throw away the first 1,980, as the comment says.
+
+`sql/explain/e2_keyset_page1.sql`, lines 1 to 4:
+
+```sql
+-- Step 4, page 1 by keyset: no bookmark yet, the first 20 rows of the index.
+SET timezone = 'UTC';
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT id, customer_id, status, total, created_at FROM orders ORDER BY created_at DESC, id DESC LIMIT 20;
+```
+
+Page 1 by keyset paging. There is no bookmark yet, so the query is just the first 20 rows of the index, and only the five columns the listing shows are selected.
+
+`sql/explain/e3_keyset_page10000_covering.sql`, lines 1 to 4:
+
+```sql
+-- Step 5, the same keyset page after migration 001 and 002: idx_orders_listing covers the five listed columns.
+SET timezone = 'UTC';
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT id, customer_id, status, total, created_at FROM orders WHERE (created_at, id) < ('2026-05-04 11:02:00+00', 832765) ORDER BY created_at DESC, id DESC LIMIT 20;
+```
+
+Page 10,000 by keyset after both migrations. The condition `(created_at, id) < ('2026-05-04 11:02:00+00', 832765)` compares the pair with the bookmark: first by time, and by id when the times are equal. This jumps straight to the right place in the index. The covering index contains all five selected columns, so the plan can be an index-only scan.
+
 ## Try it yourself
 
 (After `make up db`; `P="docker compose exec -T db psql -U lab -d lab"`.)
