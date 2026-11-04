@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760" role="img" aria-labelledby="t d">
+<title id="t">Busy listing: one run</title>
+<desc id="d">One make run, step by step. The runner starts the app, runs phase 1 with the naive listing, where each page costs 21 statements, then phases 2, 3 and 4, and ranks the statistics. Database time falls from 10,139 ms to 33 ms.</desc>
+<style>
+:root{--paper:#0d1117;--ink:#f5f4f8;--mute:#9a96ab;--accent:#6ec8ff;--good:#7ce0a1;--warn:#ffd166}
+text{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace;fill:var(--ink)}
+.title{font-family:Georgia,'Iowan Old Style','Times New Roman',serif;font-size:36px}
+.caption{font-size:16px;fill:var(--mute)}
+.name{font-size:20px;font-weight:600}
+.lane{font-size:17px;font-weight:600}
+.sub{font-size:15px;fill:var(--mute)}
+.label{font-size:15px}
+.tag{font-size:15px;fill:var(--mute)}
+.num{font-size:15px;font-weight:700;fill:var(--paper)}
+.legend{font-size:14px;fill:var(--mute)}
+.t-accent{fill:var(--accent)}
+.t-good{fill:var(--good)}
+.t-warn{fill:var(--warn)}
+.t-ink{fill:var(--ink)}
+.b{font-weight:600}
+.paper{fill:var(--paper);stroke:var(--mute);stroke-opacity:.3}
+.grid{fill:url(#grid)}
+.boundary{fill:var(--mute);fill-opacity:.035;stroke:var(--mute);stroke-opacity:.7;stroke-dasharray:6 5}
+.svc{fill:var(--accent);fill-opacity:.08;stroke:var(--accent);stroke-width:1.25}
+.store{fill:var(--mute);fill-opacity:.1;stroke:var(--mute);stroke-width:1.25}
+.rim{fill:none;stroke:var(--mute);stroke-width:1.25}
+.actor{fill:none;stroke:var(--mute);stroke-width:1.25}
+.slot{fill:var(--accent);fill-opacity:.14;stroke:var(--accent);stroke-width:1}
+.note{fill:var(--warn);fill-opacity:.09;stroke:var(--warn);stroke-width:1}
+.win{fill:var(--good);fill-opacity:.09;stroke:var(--good);stroke-width:1}
+.hair{fill:none;stroke:var(--mute);stroke-opacity:.4;stroke-width:1}
+.zone{fill:var(--accent);fill-opacity:.045;stroke:var(--accent);stroke-width:1.25;stroke-dasharray:6 5}
+.stop{fill:none;stroke:var(--warn);stroke-width:4;stroke-linecap:round}
+.mask{fill:var(--paper)}
+.sync,.async,.read,.fail,.ok{fill:none}
+.sync{stroke:var(--accent);stroke-width:1.75;marker-end:url(#a-sync)}
+.async{stroke:var(--accent);stroke-width:1.75;stroke-dasharray:8 6;marker-end:url(#a-async)}
+.read{stroke:var(--mute);stroke-width:1.75;stroke-linecap:round;stroke-dasharray:1 6;marker-end:url(#a-read)}
+.fail{stroke:var(--warn);stroke-width:2;marker-end:url(#a-fail)}
+.ok{stroke:var(--good);stroke-width:1.75;marker-end:url(#a-ok)}
+.dot{fill:var(--accent)}
+.dot-w{fill:var(--warn)}
+.dot-g{fill:var(--good)}
+.head-sync,.head-async{stroke:var(--accent)}
+.head-sync{fill:var(--accent)}
+.head-async,.head-read{fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.head-read{stroke:var(--mute)}
+.head-fail{fill:var(--warn)}
+.head-ok{fill:var(--good)}
+.gridline{fill:none;stroke:var(--mute);stroke-opacity:.09}
+</style>
+<defs>
+<pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path class="gridline" d="M40 0H0V40"/></pattern>
+<marker id="a-sync" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="head-sync" d="M0 0L10 5L0 10z"/></marker>
+<marker id="a-async" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="head-async" d="M1 1L9 5L1 9"/></marker>
+<marker id="a-read" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="head-read" d="M1 1L9 5L1 9"/></marker>
+<marker id="a-fail" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="head-fail" d="M0 0L10 5L0 10z"/></marker>
+<marker id="a-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path class="head-ok" d="M0 0L10 5L0 10z"/></marker>
+</defs>
+<rect class="paper" x="0.5" y="0.5" width="1199" height="759" rx="16"/>
+<rect class="grid" x="1" y="1" width="1198" height="758" rx="16"/>
+<text class="title" x="48" y="68">One run: four phases, one ranking</text>
+<text class="caption" x="48" y="100">make run: the amber rows are the N+1 and the deep OFFSET that phase 1 shows and phases 2 to 4 fix.</text>
+<rect class="svc" x="400" y="128" width="120" height="48" rx="10"/>
+<text class="lane" x="460" y="158" text-anchor="middle">Runner</text>
+<rect class="svc" x="545" y="128" width="130" height="48" rx="10"/>
+<text class="lane" x="610" y="148" text-anchor="middle">Query</text>
+<text class="lane" x="610" y="168" text-anchor="middle">statistics</text>
+<rect class="svc" x="700" y="128" width="140" height="48" rx="10"/>
+<text class="lane" x="770" y="158" text-anchor="middle">Load script</text>
+<rect class="svc" x="860" y="128" width="150" height="48" rx="10"/>
+<text class="lane" x="935" y="148" text-anchor="middle">Listing page</text>
+<text class="lane" x="935" y="168" text-anchor="middle">and ORM</text>
+<rect class="svc" x="1021" y="128" width="130" height="48" rx="10"/>
+<text class="lane" x="1086" y="158" text-anchor="middle">PostgreSQL</text>
+<path class="hair" d="M460 176V636M610 176V636M770 176V636M935 176V636M1086 176V636"/>
+<path class="hair" d="M66 216V600"/>
+<circle class="dot" cx="66" cy="216" r="15"/><text class="num" x="66" y="221" text-anchor="middle">1</text>
+<text class="label b t-ink" x="96" y="212">Runner starts the app</text>
+<text class="sub" x="96" y="232">uvicorn on APP_PORT, /health</text>
+<path class="sync" d="M460 216H935"/>
+<text class="label t-accent" x="786" y="206">GET /health</text>
+<circle class="dot" cx="66" cy="280" r="15"/><text class="num" x="66" y="285" text-anchor="middle">2</text>
+<text class="label b t-ink" x="96" y="276">Phase 1, naive</text>
+<text class="sub" x="96" y="296">plans, 5 warm-ups, reset, load</text>
+<path class="sync" d="M460 280H770"/>
+<text class="label t-accent" x="626" y="270">300 requests</text>
+<circle class="dot-w" cx="66" cy="344" r="15"/><text class="num" x="66" y="349" text-anchor="middle">2x</text>
+<text class="label b t-warn" x="96" y="340">N+1 and a deep OFFSET</text>
+<text class="sub" x="96" y="360">21 statements a page, 6,300 total</text>
+<path class="fail" d="M935 344H1086"/>
+<text class="label t-warn" x="947" y="334">21 SELECTs</text>
+<circle class="dot" cx="66" cy="408" r="15"/><text class="num" x="66" y="413" text-anchor="middle">3</text>
+<text class="label b t-ink" x="96" y="404">Phase 2, batched</text>
+<text class="sub" x="96" y="424">customers in one query a page</text>
+<path class="sync" d="M935 408H1086"/>
+<text class="label t-accent" x="947" y="398">= ANY($1)</text>
+<circle class="dot" cx="66" cy="472" r="15"/><text class="num" x="66" y="477" text-anchor="middle">4</text>
+<text class="label b t-ink" x="96" y="468">Phase 3, keyset</text>
+<text class="sub" x="96" y="488">bookmarks; 23 pages at 10,000</text>
+<path class="sync" d="M935 472H1086"/>
+<text class="label t-accent" x="947" y="462">keyset seek</text>
+<circle class="dot" cx="66" cy="536" r="15"/><text class="num" x="66" y="541" text-anchor="middle">5</text>
+<text class="label b t-ink" x="96" y="532">Phase 4, covering index</text>
+<text class="sub" x="96" y="552">migrations 001, 002, VACUUM</text>
+<path class="sync" d="M460 536H1086"/>
+<text class="label t-accent" x="947" y="526">001, 002</text>
+<circle class="dot-g" cx="66" cy="600" r="15"/><text class="num" x="66" y="605" text-anchor="middle">6</text>
+<text class="label b t-ink" x="96" y="596">Rank, write results.md</text>
+<text class="sub" x="96" y="616">total time and calls, per phase</text>
+<path class="read" d="M610 600H460"/>
+<text class="label " x="476" y="590">rank</text>
+<rect class="win" x="660" y="580" width="340" height="40" rx="10"/>
+<text class="label b t-good" x="676" y="605">DB time 10,139 ms down to 33 ms</text>
+<path class="sync" d="M48 716H112"/><text class="legend" x="124" y="721">sync call</text>
+<path class="read" d="M520 716H584"/><text class="legend" x="596" y="721">read</text>
+<path class="fail" d="M696 716H760"/><text class="legend" x="772" y="721">failure path</text>
+</svg>

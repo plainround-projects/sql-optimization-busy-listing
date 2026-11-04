@@ -59,6 +59,8 @@ Indexes: `orders_pkey (id)`, `customers_pkey (id)`, then `idx_orders_created_id 
 
 ## Data flow of one run (`make run`)
 
+Drawn versions of this figure and of the walk-through: [the architecture](docs/diagrams/architecture.svg) and [one run](docs/diagrams/flow.svg).
+
 ```mermaid
 flowchart LR
     load["Load script<br/>300 requests, fixed seed"] -->|"GET /orders"| web["Listing page<br/>FastAPI"]

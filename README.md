@@ -4,6 +4,24 @@ A small web app and ORM that lists orders with their customers, 20 to a page, a 
 
 This repository is the runnable build of the Plainround lesson **"Fix a busy listing from the database's own statistics"** (`/prep/sql-optimization/project-busy-listing`, planned at **9 hours**). It uses PostgreSQL 18 with `pg_stat_statements`, one of the two engines the lesson allows.
 
+## Architecture
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/architecture-dark.svg">
+  <img alt="A runner drives a load script that calls the FastAPI listing page. The page calls an ORM that sends statements to the orders and customers tables in PostgreSQL 18, and pg_stat_statements counts each one. The runner resets and ranks the statistics and runs EXPLAIN and the migrations." src="docs/diagrams/architecture.svg">
+</picture>
+
+Notice that the runner, not the app, owns the evidence: it resets and reads pg_stat_statements around each of the four phases. Amber marks the naive ORM loop and the deep offset.
+
+## How one run flows
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/flow-dark.svg">
+  <img alt="One make run in six steps. The runner starts the app, replays the naive listing where each page costs 21 statements, fixes it in three phases, and ranks the statistics, taking database time from 10,139 ms to 33 ms." src="docs/diagrams/flow.svg">
+</picture>
+
+The run is the same 300 requests four times; the amber row is the N+1 and deep offset of phase 1, and the green box is the end result.
+
 ## What is in it
 
 | Piece | Where |
